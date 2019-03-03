@@ -313,6 +313,10 @@ table td {
 		max-width: 100% !important;
 	}
 
+	@page {
+		size: letter;
+	}
+
 	@page :left {
 		margin: 15mm 20mm 15mm 10mm;
 	}
