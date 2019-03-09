@@ -7,6 +7,7 @@ HTML='false'
 ZIP='false'
 ALL='true'
 COVER='false'
+BUILD_DIR='build'
 
 # Merge options into defaults
 while getopts t:epmhca option
@@ -24,32 +25,36 @@ c) COVER='true';;
 esac
 done
 
+if [ ! -d $BUILD_DIR ] ; then
+	mkdir $BUILD_DIR
+fi
+
 # EPUB
 if [ $ALL == 'true' ] || [ $EPUB == 'true' ] ; then
-	pandoc assets/metadata.yml chapters/*.md -o $TITLE.epub -t epub+smart
+	pandoc assets/metadata.yml chapters/*.md -o $BUILD_DIR/$TITLE.epub -t epub+smart
 fi
 
 
 # PDF
 if [ $ALL == 'true' ] || [ $PDF == 'true' ] ; then
 	## Temp PDF
-	pandoc assets/title.md assets/toc.md chapters/*.md assets/scripts.md -o $TITLE-temp.pdf -t html5+smart --pdf-engine=weasyprint -c assets/pandoc.css --metadata pagetitle="$TITLE"
+	pandoc assets/title.md assets/toc.md chapters/*.md assets/scripts.md -o $BUILD_DIR/$TITLE-temp.pdf -t html5+smart --pdf-engine=weasyprint -c assets/pandoc.css --metadata pagetitle="$TITLE"
 
 	## Merge Cover
 	if [ $COVER == 'true' ] ; then
-		/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Resources/join.py -o $TITLE.pdf assets/cover.pdf $TITLE-temp.pdf
+		/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Resources/join.py -o $BUILD_DIR/$TITLE.pdf assets/cover.pdf $BUILD_DIR/$TITLE-temp.pdf
 	else
-		/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Resources/join.py -o $TITLE.pdf $TITLE-temp.pdf
+		/System/Library/Automator/Combine\ PDF\ Pages.action/Contents/Resources/join.py -o $BUILD_DIR/$TITLE.pdf $BUILD_DIR/$TITLE-temp.pdf
 	fi
 
 	## Remove Temp
-	rm $TITLE-temp.pdf
+	rm $BUILD_DIR/$TITLE-temp.pdf
 fi
 
 # MOBI
 if [ $ALL == 'true' ] || [ $MOBI == 'true' ] ; then
 	if [ $ALL == 'true' ] || [ $EPUB == 'true' ] ; then
-		ebook-convert $TITLE.epub $TITLE.mobi
+		ebook-convert $BUILD_DIR/$TITLE.epub $BUILD_DIR/$TITLE.mobi
 	else
 		echo "WARNING: MOBI format can only be created is EPUB is also created"
 	fi
@@ -58,13 +63,13 @@ fi
 
 # HTML
 if [ $ALL == 'true' ] || [ $HTML == 'true' ] ; then
-	pandoc -H assets/pandoc-before.css -H assets/pandoc.css -H assets/pdf-overrides.css -H assets/pandoc-after.css assets/title.md assets/toc.md chapters/*.md assets/scripts.md -o $TITLE.html -t html5+smart --metadata pagetitle="$TITLE"
+	pandoc -H assets/pandoc-before.css -H assets/pandoc.css -H assets/pdf-overrides.css -H assets/pandoc-after.css assets/title.md assets/toc.md chapters/*.md assets/scripts.md -o $BUILD_DIR/$TITLE.html -t html5+smart --metadata pagetitle="$TITLE"
 fi
 
 # Zip
 if [ $ALL == 'true' ] || [ $ZIP == 'true' ] ; then
 	if [ $ALL == 'true' ] ; then
-		zip $TITLE.zip $TITLE.epub $TITLE.mobi $TITLE.pdf $TITLE.html
+		zip $BUILD_DIR/$TITLE.zip $BUILD_DIR/$TITLE.epub $BUILD_DIR/$TITLE.mobi $BUILD_DIR/$TITLE.pdf $BUILD_DIR/$TITLE.html
 	else
 		echo "WARNING: ZIP file can only be created if all other formats are also supported"
 	fi
